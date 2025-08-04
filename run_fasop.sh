@@ -14,18 +14,19 @@ HUGGINGFACE_TOKEN=$2
 
 #docker run --gpus all -i -t --name cmh_2.3.1 --ipc=host --network=host swsok/fasop_docker:pytorch_2.5.0-cuda12.4-cudnn9-devel /bin/bash
 
-docker rm -f $CONTAINER_NAME 2>/dev/null
+#docker rm -f $CONTAINER_NAME 2>/dev/null
 
 docker run -d $COMMON_ARG $DOCKER_IMG sleep infinity
 
 #docker exec -w /workspace $CONTAINER_NAME ls -al | tee -a fasop_run.log
 
 #run TP=1
-docker exec -w /workspace/aicomp/compiler_fx $CONTAINER_NAME sh -c "torchrun --nproc_per_node=1 --nnodes=1 --node_rank=0 --master_addr=$MASTER_ADDR --master_port=29500  llama_2d_local4fasop_prof.py $HUGGINGFACE_TOKEN | tee /workspace/tdpp/log2/tp_output/tp1_output.out"
+for TP in 1 2 4; do
+	docker exec -w /workspace/aicomp/compiler_fx $CONTAINER_NAME sh -c "torchrun --nproc_per_node=$TP --nnodes=1 --node_rank=0 --master_addr=$MASTER_ADDR --master_port=29500  llama_2d_local4fasop_prof.py $HUGGINGFACE_TOKEN | tee /workspace/tdpp/log2/tp_output/tp$TP_output.out"
 
 #get mean numbers from log
-docker exec -w /workspace/tdpp/Megatron-LM $CONTAINER_NAME python3 _06_get_layer_time.py | tee tp1_fasop.txt
-
+	docker exec -w /workspace/tdpp/Megatron-LM $CONTAINER_NAME sh -c "python3 _06_get_layer_time.py | grep mean | awk '{print $2}' > tp$TP_fasop.txt"
+done
 
 #docker stop $CONTAINER_NAME
 #docker rm $CONTAINER_NAME
