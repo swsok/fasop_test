@@ -36,5 +36,6 @@ RUN unzip tdpp.zip
 RUN mkdir -p tdpp/log2/tp_output
 RUN rm tdpp.zip
 COPY _06_get_layer_time.py /workspace/tdpp/Megatron-LM/_06_get_layer_time.py
+COPY profile.py /workspace/tdpp/FASOP/known_cost/profile.py
 
  
